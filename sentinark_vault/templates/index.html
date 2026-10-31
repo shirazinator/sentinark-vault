@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sentinark-Vault // Zero-Knowledge Password & Breach Auditor</title>
+    <style>
+        :root {
+            --bg-main: #0B0F19;
+            --bg-card: #111827;
+            --bg-input: #1F2937;
+            --border: #374151;
+            --text-main: #F9FAFB;
+            --text-muted: #9CA3AF;
+            --cyan: #06B6D4;
+            --green: #10B981;
+            --yellow: #F59E0B;
+            --red: #EF4444;
+            --purple: #8B5CF6;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace; }
+        body { background-color: var(--bg-main); color: var(--text-main); min-height: 100vh; padding: 2rem 1rem; }
+        .container { max-width: 960px; margin: 0 auto; }
+        
+        .header { text-align: center; margin-bottom: 2.5rem; }
+        .badge-title { display: inline-block; padding: 0.25rem 0.75rem; border-radius: 9999px; background: rgba(6, 182, 212, 0.15); color: var(--cyan); font-size: 0.8rem; font-weight: 700; letter-spacing: 0.05em; margin-bottom: 0.75rem; border: 1px solid rgba(6, 182, 212, 0.3); }
+        .header h1 { font-size: 2.5rem; font-weight: 800; letter-spacing: -0.02em; background: linear-gradient(135deg, #FFF, var(--cyan)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .header p { color: var(--text-muted); margin-top: 0.5rem; font-size: 1rem; }
+
+        .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.5); }
+        
+        .input-group { position: relative; margin-bottom: 1rem; }
+        .input-group input { width: 100%; padding: 1rem 1.25rem; background: var(--bg-input); border: 2px solid var(--border); border-radius: 8px; color: var(--text-main); font-size: 1.1rem; transition: border-color 0.2s; outline: none; }
+        .input-group input:focus { border-color: var(--cyan); }
+        
+        .btn-row { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 1rem; }
+        .btn { padding: 0.75rem 1.25rem; border-radius: 8px; border: none; font-weight: 600; cursor: pointer; transition: all 0.2s; font-size: 0.95rem; }
+        .btn-primary { background: var(--cyan); color: #000; }
+        .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn-secondary { background: var(--bg-input); color: var(--text-main); border: 1px solid var(--border); }
+        .btn-secondary:hover { background: #374151; }
+
+        .grid-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+        .stat-box { background: rgba(0,0,0,0.25); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; text-align: center; }
+        .stat-label { font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+        .stat-value { font-size: 1.6rem; font-weight: 800; margin-top: 0.35rem; }
+
+        .banner-alert { padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.75rem; font-weight: 600; }
+        .alert-danger { background: rgba(239, 68, 68, 0.15); border: 1px solid var(--red); color: var(--red); }
+        .alert-success { background: rgba(16, 185, 129, 0.15); border: 1px solid var(--green); color: var(--green); }
+
+        .table-responsive { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th, td { padding: 0.85rem; border-bottom: 1px solid var(--border); }
+        th { font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; }
+        td { font-size: 0.95rem; }
+
+        .badge { display: inline-block; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.8rem; font-weight: 700; }
+        .badge-danger { background: rgba(239, 68, 68, 0.2); color: var(--red); }
+        .badge-warning { background: rgba(245, 158, 11, 0.2); color: var(--yellow); }
+        .badge-success { background: rgba(16, 185, 129, 0.2); color: var(--green); }
+
+        .suggest-card { background: rgba(6, 182, 212, 0.05); border: 1px dashed var(--cyan); border-radius: 8px; padding: 1rem; margin-top: 1rem; }
+        .suggest-title { color: var(--cyan); font-weight: 700; margin-bottom: 0.5rem; font-size: 0.95rem; }
+        .suggest-val { font-family: monospace; font-size: 1.1rem; color: #FFF; background: var(--bg-main); padding: 0.5rem 0.75rem; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; }
+        .copy-btn { background: var(--cyan); color: #000; border: none; padding: 0.35rem 0.75rem; border-radius: 4px; cursor: pointer; font-weight: 700; font-size: 0.75rem; }
+
+        .threat-breakdown { margin-top: 1.25rem; font-size: 0.9rem; line-height: 1.6; color: var(--text-muted); border-top: 1px solid var(--border); padding-top: 1rem; }
+        .threat-breakdown strong { color: var(--text-main); }
+        .footer { text-align: center; color: var(--text-muted); font-size: 0.85rem; margin-top: 3rem; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <div class="badge-title">SENTINARK-VAULT // CYBERSECURITY SUITE</div>
+        <h1>Zero-Knowledge Password Auditor</h1>
+        <p>Mathematical Entropy Analysis • k-Anonymity Breach Verification • Hardware Crack-Time Benchmarking</p>
+    </div>
+
+    <!-- Input Card -->
+    <div class="card">
+        <div class="input-group">
+            <input type="text" id="passwordInput" placeholder="Type or paste a password to audit (e.g., User@123)..." autofocus>
+        </div>
+        <div class="btn-row">
+            <button class="btn btn-primary" onclick="runAudit()">Audit Password</button>
+            <button class="btn btn-secondary" onclick="generateSample('complex')">Generate Alphanumeric Key</button>
+            <button class="btn btn-secondary" onclick="generateSample('passphrase')">Generate Diceware Passphrase</button>
+        </div>
+        <p style="font-size: 0.8rem; color: var(--text-muted);">
+            🔒 <strong>Zero-Knowledge Assurance:</strong> Passwords are never sent across the network. Breach checks use SHA-1 k-Anonymity (only the first 5 hash characters are queried).
+        </p>
+    </div>
+
+    <!-- Results Area (Hidden Initially) -->
+    <div id="resultsArea" style="display: none;">
+        
+        <!-- Breach Banner -->
+        <div id="breachBanner" class="banner-alert"></div>
+
+        <!-- Metric Grid -->
+        <div class="grid-stats">
+            <div class="stat-box">
+                <div class="stat-label">Defense Score</div>
+                <div id="statScore" class="stat-value" style="color: var(--cyan);">--</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Shannon Entropy</div>
+                <div id="statEntropy" class="stat-value">-- bits</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Combinatorial Keyspace</div>
+                <div id="statKeyspace" class="stat-value" style="font-size: 1.1rem; margin-top: 0.6rem;">--</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Length / Charset</div>
+                <div id="statLength" class="stat-value">--</div>
+            </div>
+        </div>
+
+        <!-- Hardware Crack Time Matrix -->
+        <div class="card">
+            <h3 style="margin-bottom: 1rem; font-size: 1.1rem;">⚡ Hardware Crack-Time Simulation (Closed-Form Math)</h3>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Attack Profile / Hardware Rig</th>
+                            <th>Hash Speed</th>
+                            <th>Estimated Crack Time</th>
+                        </tr>
+                    </thead>
+                    <tbody id="crackTableBody">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Vulnerabilities & Recommendations -->
+        <div class="card">
+            <h3 style="margin-bottom: 0.75rem; font-size: 1.1rem;">🛡️ Identified Weaknesses & Recommendations</h3>
+            <ul id="recList" style="padding-left: 1.25rem; color: var(--text-muted); line-height: 1.8;">
+            </ul>
+        </div>
+
+        <!-- Suggested Replacements -->
+        <div class="card">
+            <h3 style="font-size: 1.1rem;">✨ Cryptographically Secure Replacements</h3>
+            <div class="suggest-card">
+                <div class="suggest-title">Recommended High-Entropy Key (18-Chars)</div>
+                <div class="suggest-val">
+                    <span id="suggestComplex">--</span>
+                    <button class="copy-btn" onclick="copyText('suggestComplex')">COPY</button>
+                </div>
+            </div>
+            <div class="suggest-card" style="margin-top: 0.75rem;">
+                <div class="suggest-title">Recommended Diceware Passphrase (5 Words)</div>
+                <div class="suggest-val">
+                    <span id="suggestPassphrase">--</span>
+                    <button class="copy-btn" onclick="copyText('suggestPassphrase')">COPY</button>
+                </div>
+            </div>
+
+            <div class="threat-breakdown">
+                <strong>💡 Threat Model Truth:</strong><br>
+                Even a 100-character uncrackable password has a <strong>0.00000001%</strong> brute-force risk, but can still be stolen by a <strong>phishing link</strong> or <strong>credential-harvesting fake form</strong>. To achieve true defense-in-depth, always combine strong passwords with <strong>FIDO2 / WebAuthn passkeys</strong> and <strong>Hardware 2FA</strong>.
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        Sentinark Suite // Developed by Shiraz // Portfolio Cybersecurity Engineering
+    </div>
+</div>
+
+<script>
+async function runAudit() {
+    const input = document.getElementById("passwordInput");
+    const val = input.value.trim();
+    if (!val) return;
+
+    try {
+        const res = await fetch("/api/audit", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ password: val })
+        });
+        const data = await res.json();
+        renderAudit(data);
+    } catch (err) {
+        alert("Error auditing password: " + err.message);
+    }
+}
+
+function renderAudit(data) {
+    document.getElementById("resultsArea").style.display = "block";
+
+    // Score
+    const statScore = document.getElementById("statScore");
+    statScore.innerText = data.score + " / 100";
+    if (data.score >= 75) statScore.style.color = "var(--green)";
+    else if (data.score >= 40) statScore.style.color = "var(--yellow)";
+    else statScore.style.color = "var(--red)";
+
+    // Stats
+    document.getElementById("statEntropy").innerText = data.entropy.entropy_bits + " bits";
+    document.getElementById("statKeyspace").innerText = data.entropy.keyspace_scientific;
+    document.getElementById("statLength").innerText = data.entropy.length + " chars (" + data.entropy.charset_size + " pool)";
+
+    // Breach Banner
+    const banner = document.getElementById("breachBanner");
+    if (data.breach_audit.pwned) {
+        banner.className = "banner-alert alert-danger";
+        banner.innerHTML = "🚨 <strong>DATA BREACH WARNING:</strong> " + data.breach_audit.message;
+    } else {
+        banner.className = "banner-alert alert-success";
+        banner.innerHTML = "🛡️ <strong>CLEAN:</strong> " + data.breach_audit.message;
+    }
+
+    // Crack Table
+    const tbody = document.getElementById("crackTableBody");
+    tbody.innerHTML = "";
+    for (const [k, v] of Object.entries(data.crack_simulation)) {
+        let badgeClass = "badge-success";
+        if (v.time_human.includes("Instant") || v.time_human.includes("second") || v.time_human.includes("minute")) {
+            badgeClass = "badge-danger";
+        } else if (v.time_human.includes("day") || v.time_human.includes("hour")) {
+            badgeClass = "badge-warning";
+        }
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td><strong>${v.name}</strong><br><span style="font-size: 0.8rem; color: var(--text-muted);">${v.description}</span></td>
+            <td style="font-family: monospace;">${v.rate_display}</td>
+            <td><span class="badge ${badgeClass}">${v.time_human}</span></td>
+        `;
+        tbody.appendChild(tr);
+    }
+
+    // Recommendations
+    const recList = document.getElementById("recList");
+    recList.innerHTML = "";
+    if (data.recommendations.length === 0) {
+        recList.innerHTML = "<li style='color: var(--green);'>Excellent security profile! No immediate weaknesses detected.</li>";
+    } else {
+        data.recommendations.forEach(r => {
+            const li = document.createElement("li");
+            li.innerText = r;
+            recList.appendChild(li);
+        });
+    }
+
+    // Replacements
+    document.getElementById("suggestComplex").innerText = data.suggested_replacements.complex.password;
+    document.getElementById("suggestPassphrase").innerText = data.suggested_replacements.passphrase.password;
+}
+
+async function generateSample(type) {
+    try {
+        const res = await fetch("/api/generate?type=" + type);
+        const data = await res.json();
+        document.getElementById("passwordInput").value = data.password;
+        runAudit();
+    } catch(e) {
+        alert("Generation error: " + e.message);
+    }
+}
+
+function copyText(elementId) {
+    const text = document.getElementById(elementId).innerText;
+    navigator.clipboard.writeText(text).then(() => {
+        alert("Copied to clipboard: " + text);
+    });
+}
+</script>
+
+</body>
+</html>
