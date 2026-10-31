@@ -7,6 +7,9 @@
 [![Security](https://img.shields.io/badge/Privacy-Zero--Knowledge-brightgreen)](https://en.wikipedia.org/wiki/Zero-knowledge_proof)
 [![Standard](https://img.shields.io/badge/Compliant-NIST%20SP%20800--63B-orange)](https://pages.nist.gov/800-63-3/sp800-63b.html)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-GitHub%20Pages-brightgreen?logo=github)](https://shirazinator.github.io/sentinark-vault/)
+
+> **🌐 Live Web Application (Zero-Installation):** [https://shirazinator.github.io/sentinark-vault/](https://shirazinator.github.io/sentinark-vault/)
 
 ---
 

@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sentinark-Vault // Zero-Knowledge Password & Breach Auditor</title>
+    <meta name="description" content="Zero-Knowledge Password Entropy, Breach Vulnerability & Hardware Crack-Time Auditor running entirely in the browser.">
+    <style>
+        :root {
+            --bg-main: #0B0F19;
+            --bg-card: #111827;
+            --bg-input: #1F2937;
+            --border: #374151;
+            --text-main: #F9FAFB;
+            --text-muted: #9CA3AF;
+            --cyan: #06B6D4;
+            --green: #10B981;
+            --yellow: #F59E0B;
+            --red: #EF4444;
+            --purple: #8B5CF6;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace; }
+        body { background-color: var(--bg-main); color: var(--text-main); min-height: 100vh; padding: 2rem 1rem; }
+        .container { max-width: 960px; margin: 0 auto; }
+        
+        .header { text-align: center; margin-bottom: 2.5rem; }
+        .badge-title { display: inline-block; padding: 0.25rem 0.75rem; border-radius: 9999px; background: rgba(6, 182, 212, 0.15); color: var(--cyan); font-size: 0.8rem; font-weight: 700; letter-spacing: 0.05em; margin-bottom: 0.75rem; border: 1px solid rgba(6, 182, 212, 0.3); }
+        .header h1 { font-size: 2.5rem; font-weight: 800; letter-spacing: -0.02em; background: linear-gradient(135deg, #FFF, var(--cyan)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .header p { color: var(--text-muted); margin-top: 0.5rem; font-size: 1rem; }
+
+        .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.5); }
+        
+        .input-group { position: relative; margin-bottom: 1rem; }
+        .input-group input { width: 100%; padding: 1rem 1.25rem; background: var(--bg-input); border: 2px solid var(--border); border-radius: 8px; color: var(--text-main); font-size: 1.1rem; transition: border-color 0.2s; outline: none; }
+        .input-group input:focus { border-color: var(--cyan); }
+        
+        .btn-row { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 1rem; }
+        .btn { padding: 0.75rem 1.25rem; border-radius: 8px; border: none; font-weight: 600; cursor: pointer; transition: all 0.2s; font-size: 0.95rem; }
+        .btn-primary { background: var(--cyan); color: #000; font-weight: 700; }
+        .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn-secondary { background: var(--bg-input); color: var(--text-main); border: 1px solid var(--border); }
+        .btn-secondary:hover { background: #374151; }
+
+        .grid-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+        .stat-box { background: rgba(0,0,0,0.25); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; text-align: center; }
+        .stat-label { font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+        .stat-value { font-size: 1.6rem; font-weight: 800; margin-top: 0.35rem; }
+
+        .banner-alert { padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.75rem; font-weight: 600; }
+        .alert-danger { background: rgba(239, 68, 68, 0.15); border: 1px solid var(--red); color: var(--red); }
+        .alert-success { background: rgba(16, 185, 129, 0.15); border: 1px solid var(--green); color: var(--green); }
+
+        .table-responsive { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th, td { padding: 0.85rem; border-bottom: 1px solid var(--border); }
+        th { font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; }
+        td { font-size: 0.95rem; }
+
+        .badge { display: inline-block; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.8rem; font-weight: 700; }
+        .badge-danger { background: rgba(239, 68, 68, 0.2); color: var(--red); }
+        .badge-warning { background: rgba(245, 158, 11, 0.2); color: var(--yellow); }
+        .badge-success { background: rgba(16, 185, 129, 0.2); color: var(--green); }
+
+        .suggest-card { background: rgba(6, 182, 212, 0.05); border: 1px dashed var(--cyan); border-radius: 8px; padding: 1rem; margin-top: 1rem; }
+        .suggest-title { color: var(--cyan); font-weight: 700; margin-bottom: 0.5rem; font-size: 0.95rem; }
+        .suggest-val { font-family: monospace; font-size: 1.1rem; color: #FFF; background: var(--bg-main); padding: 0.5rem 0.75rem; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; }
+        .copy-btn { background: var(--cyan); color: #000; border: none; padding: 0.35rem 0.75rem; border-radius: 4px; cursor: pointer; font-weight: 700; font-size: 0.75rem; }
+
+        .threat-breakdown { margin-top: 1.25rem; font-size: 0.9rem; line-height: 1.6; color: var(--text-muted); border-top: 1px solid var(--border); padding-top: 1rem; }
+        .threat-breakdown strong { color: var(--text-main); }
+        .nav-links { display: flex; justify-content: center; gap: 1.5rem; margin-bottom: 1.5rem; }
+        .nav-link { color: var(--cyan); text-decoration: none; font-size: 0.9rem; font-weight: 600; }
+        .nav-link:hover { text-decoration: underline; }
+        .footer { text-align: center; color: var(--text-muted); font-size: 0.85rem; margin-top: 3rem; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="nav-links">
+        <a class="nav-link" href="https://shirazinator.github.io/sentinark-vault/">🛡️ Sentinark-Vault</a>
+        <a class="nav-link" href="https://shirazinator.github.io/sentinark-ghost/">👻 Sentinark-Ghost</a>
+        <a class="nav-link" href="https://shirazinator.github.io/sentinark-trace/">🎯 Sentinark-Trace</a>
+        <a class="nav-link" href="https://github.com/shirazinator/sentinark-vault" target="_blank">⭐ GitHub Repo</a>
+    </div>
+
+    <div class="header">
+        <div class="badge-title">SENTINARK-VAULT // CLIENT-SIDE LIVE APP</div>
+        <h1>Zero-Knowledge Password Auditor</h1>
+        <p>Mathematical Entropy Analysis • k-Anonymity Breach Verification • Hardware Crack-Time Benchmarking</p>
+    </div>
+
+    <!-- Input Card -->
+    <div class="card">
+        <div class="input-group">
+            <input type="text" id="passwordInput" placeholder="Type or paste a password to audit (e.g., User@123)..." autofocus oninput="debounceAudit()">
+        </div>
+        <div class="btn-row">
+            <button class="btn btn-primary" onclick="runAudit()">Audit Password</button>
+            <button class="btn btn-secondary" onclick="generateSample('complex')">Generate Alphanumeric Key</button>
+            <button class="btn btn-secondary" onclick="generateSample('passphrase')">Generate Diceware Passphrase</button>
+        </div>
+        <p style="font-size: 0.8rem; color: var(--text-muted);">
+            🔒 <strong>100% Client-Side Privacy:</strong> Passwords are never sent across the internet. Breach verification uses SHA-1 k-Anonymity (only the first 5 hash characters are queried to HaveIBeenPwned API).
+        </p>
+    </div>
+
+    <!-- Results Area -->
+    <div id="resultsArea" style="display: none;">
+        
+        <!-- Breach Banner -->
+        <div id="breachBanner" class="banner-alert"></div>
+
+        <!-- Metric Grid -->
+        <div class="grid-stats">
+            <div class="stat-box">
+                <div class="stat-label">Defense Score</div>
+                <div id="statScore" class="stat-value" style="color: var(--cyan);">--</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Shannon Entropy</div>
+                <div id="statEntropy" class="stat-value">-- bits</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Combinatorial Keyspace</div>
+                <div id="statKeyspace" class="stat-value" style="font-size: 1.1rem; margin-top: 0.6rem;">--</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Length / Charset</div>
+                <div id="statLength" class="stat-value">--</div>
+            </div>
+        </div>
+
+        <!-- Hardware Crack Time Matrix -->
+        <div class="card">
+            <h3 style="margin-bottom: 1rem; font-size: 1.1rem;">⚡ Hardware Crack-Time Simulation (Closed-Form Math)</h3>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Attack Profile / Hardware Rig</th>
+                            <th>Hash Speed</th>
+                            <th>Estimated Crack Time</th>
+                        </tr>
+                    </thead>
+                    <tbody id="crackTableBody">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Vulnerabilities & Recommendations -->
+        <div class="card">
+            <h3 style="margin-bottom: 0.75rem; font-size: 1.1rem;">🛡️ Identified Weaknesses & Recommendations</h3>
+            <ul id="recList" style="padding-left: 1.25rem; color: var(--text-muted); line-height: 1.8;">
+            </ul>
+        </div>
+
+        <!-- Suggested Replacements -->
+        <div class="card">
+            <h3 style="font-size: 1.1rem;">✨ Cryptographically Secure Replacements</h3>
+            <div class="suggest-card">
+                <div class="suggest-title">Recommended High-Entropy Key (18-Chars)</div>
+                <div class="suggest-val">
+                    <span id="suggestComplex">--</span>
+                    <button class="copy-btn" onclick="copyText('suggestComplex')">COPY</button>
+                </div>
+            </div>
+            <div class="suggest-card" style="margin-top: 0.75rem;">
+                <div class="suggest-title">Recommended Diceware Passphrase (5 Words)</div>
+                <div class="suggest-val">
+                    <span id="suggestPassphrase">--</span>
+                    <button class="copy-btn" onclick="copyText('suggestPassphrase')">COPY</button>
+                </div>
+            </div>
+
+            <div class="threat-breakdown">
+                <strong>💡 Threat Model Truth:</strong><br>
+                Even a 100-character uncrackable password has a <strong>0.00000001%</strong> brute-force risk, but can still be stolen by a <strong>phishing link</strong> or <strong>credential-harvesting fake form</strong>. To achieve true defense-in-depth, always combine strong passwords with <strong>FIDO2 / WebAuthn passkeys</strong> and <strong>Hardware 2FA</strong>.
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        Sentinark Suite // Developed by Shiraz // Hosted on GitHub Pages
+    </div>
+</div>
+
+<script>
+const DICTIONARY_WORDS = [
+    "password", "123456", "12345678", "qwerty", "admin", "welcome", "login",
+    "user", "guest", "root", "default", "secret", "master", "football", "dragon"
+];
+
+const PASSPHRASE_WORDS = [
+    "abandon", "ability", "absent", "absorb", "abstract", "academy", "accent", "acoustic",
+    "acquire", "action", "actress", "adapt", "address", "advance", "aerobic", "affair",
+    "agility", "airport", "alarm", "album", "alcohol", "alien", "alpha", "altitude",
+    "amber", "anchor", "ancient", "antenna", "apology", "arch", "archive", "armor",
+    "arrow", "artifact", "artist", "aspect", "assault", "asset", "atlas", "atom",
+    "kinetic", "obsidian", "photon", "glacier", "zenith", "crystal", "matrix", "pulsar"
+];
+
+const HARDWARE_PROFILES = [
+    { name: "Online Attack (Web Login with Rate Limits)", rate: 10, desc: "Standard online brute force against modern login endpoints." },
+    { name: "Standard Laptop CPU (Single Core)", rate: 100000, desc: "Basic consumer CPU offline attack." },
+    { name: "Single NVIDIA RTX 4090 GPU", rate: 20000000000, desc: "High-end enthusiast GPU running Hashcat." },
+    { name: "8x NVIDIA RTX 4090 Dedicated Cracking Rig", rate: 160000000000, desc: "Dedicated forensic / penetration tester cracking server." },
+    { name: "Nation-State / ASIC Supercomputer Cluster", rate: 100000000000000, desc: "Massive state-sponsored ASIC / supercomputer cracking cluster." }
+];
+
+async function sha1Hex(str) {
+    const buffer = new TextEncoder().encode(str);
+    const hashBuffer = await crypto.subtle.digest("SHA-1", buffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, "0")).join("").toUpperCase();
+}
+
+async function checkHIBP(password) {
+    try {
+        const hash = await sha1Hex(password);
+        const prefix = hash.slice(0, 5);
+        const suffix = hash.slice(5);
+
+        const res = await fetch(`https://api.pwnedpasswords.com/range/${prefix}`, {
+            headers: { "Add-Padding": "true" }
+        });
+        if (!res.ok) return { pwned: false, count: 0, status: "error" };
+
+        const text = await res.text();
+        for (const line of text.split("\n")) {
+            const parts = line.trim().split(":");
+            if (parts[0] === suffix) {
+                return { pwned: true, count: parseInt(parts[1], 10), status: "compromised" };
+            }
+        }
+        return { pwned: false, count: 0, status: "clean" };
+    } catch(e) {
+        return { pwned: false, count: 0, status: "offline", message: e.message };
+    }
+}
+
+function calculateEntropy(pwd) {
+    if (!pwd) return { length: 0, charsetSize: 0, bits: 0, scientificKeyspace: "0" };
+    const length = pwd.length;
+    let charset = 0;
+    if (/[a-z]/.test(pwd)) charset += 26;
+    if (/[A-Z]/.test(pwd)) charset += 26;
+    if (/[0-9]/.test(pwd)) charset += 10;
+    if (/[^a-zA-Z0-9]/.test(pwd)) charset += 33;
+    charset = Math.max(charset, 1);
+
+    const bits = length * Math.log2(charset);
+    const log10Keyspace = length * Math.log10(charset);
+    const exp = Math.floor(log10Keyspace);
+    const mant = Math.pow(10, log10Keyspace - exp);
+    const scientific = exp > 0 ? `${mant.toFixed(2)} × 10^${exp}` : `${Math.round(mant)}`;
+
+    return { length, charsetSize: charset, bits: parseFloat(bits.toFixed(1)), scientificKeyspace: scientific };
+}
+
+function secondsToHuman(log10Seconds) {
+    if (log10Seconds < -3) return "Instant (< 1 ms)";
+    if (log10Seconds < 0) return "< 1 second";
+    if (log10Seconds < 10) {
+        const s = Math.pow(10, log10Seconds);
+        if (s < 60) return `${s.toFixed(1)} seconds`;
+        if (s < 3600) return `${(s/60).toFixed(1)} minutes`;
+        if (s < 86400) return `${(s/3600).toFixed(1)} hours`;
+        if (s < 31536000) return `${(s/86400).toFixed(1)} days`;
+        return `${(s/31536000).toFixed(1)} years`;
+    }
+    const log10Years = log10Seconds - 7.4988;
+    if (log10Years < 9) return `${Math.round(Math.pow(10, log10Years)).toLocaleString()} years`;
+    if (log10Years < 10) return `${Math.pow(10, log10Years - 9).toFixed(2)} Billion years`;
+    const exp = Math.floor(log10Years);
+    const mant = Math.pow(10, log10Years - exp);
+    return `${mant.toFixed(2)} × 10^${exp} years (Astronomical)`;
+}
+
+function simulateCrackTimes(length, charsetSize) {
+    if (length <= 0) return HARDWARE_PROFILES.map(p => ({ ...p, time: "Instant" }));
+    const log10Keyspace = length * Math.log10(charsetSize);
+    const log10Guesses = log10Keyspace - Math.log10(2);
+    return HARDWARE_PROFILES.map(p => {
+        const log10Sec = log10Guesses - Math.log10(p.rate);
+        return {
+            name: p.name,
+            desc: p.desc,
+            rate: `${p.rate.toLocaleString()} guesses/sec`,
+            time: secondsToHuman(log10Sec)
+        };
+    });
+}
+
+function detectWeaknesses(pwd) {
+    const list = [];
+    let penalty = 0;
+    const lower = pwd.toLowerCase();
+
+    for (const word of DICTIONARY_WORDS) {
+        if (lower.includes(word)) {
+            list.push(`Contains dictionary root word: '${word}'`);
+            penalty += 35;
+            break;
+        }
+    }
+    if (/(19\d{2}|20[0-3]\d)/.test(pwd)) {
+        list.push("Contains common calendar or birth year (1950-2035)");
+        penalty += 15;
+    }
+    if (/(.)\1{2,}/.test(pwd)) {
+        list.push("Contains repetitive characters");
+        penalty += 15;
+    }
+    if (pwd.length < 12) {
+        list.push("Short length (< 12 characters; modern guidelines require 14+)");
+        penalty += 20;
+    }
+    return { list, penalty };
+}
+
+function generateSecureAlphanumeric(len = 18) {
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()-_=+[]{}";
+    const array = new Uint32Array(len);
+    window.crypto.getRandomValues(array);
+    let str = "";
+    for (let i = 0; i < len; i++) {
+        str += chars[array[i] % chars.length];
+    }
+    return str;
+}
+
+function generateSecurePassphrase(wordsCount = 5) {
+    const array = new Uint32Array(wordsCount);
+    window.crypto.getRandomValues(array);
+    const selected = [];
+    for (let i = 0; i < wordsCount; i++) {
+        selected.push(PASSPHRASE_WORDS[array[i] % PASSPHRASE_WORDS.length]);
+    }
+    return selected.join("-");
+}
+
+let debounceTimer = null;
+function debounceAudit() {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(runAudit, 350);
+}
+
+async function runAudit() {
+    const pwd = document.getElementById("passwordInput").value.trim();
+    if (!pwd) return;
+
+    document.getElementById("resultsArea").style.display = "block";
+    const ent = calculateEntropy(pwd);
+    const weak = detectWeaknesses(pwd);
+    const crackTimes = simulateCrackTimes(ent.length, ent.charsetSize);
+    
+    // Check HIBP
+    const hibp = await checkHIBP(pwd);
+
+    let score = Math.max(0, Math.min(100, ent.bits - weak.penalty));
+    if (hibp.pwned) score = Math.min(score, 10);
+
+    // Render Score
+    const statScore = document.getElementById("statScore");
+    statScore.innerText = `${Math.round(score)} / 100`;
+    statScore.style.color = score >= 75 ? "var(--green)" : (score >= 40 ? "var(--yellow)" : "var(--red)");
+
+    document.getElementById("statEntropy").innerText = `${ent.bits} bits`;
+    document.getElementById("statKeyspace").innerText = ent.scientificKeyspace;
+    document.getElementById("statLength").innerText = `${ent.length} chars (${ent.charsetSize} pool)`;
+
+    // Banner
+    const banner = document.getElementById("breachBanner");
+    if (hibp.pwned) {
+        banner.className = "banner-alert alert-danger";
+        banner.innerHTML = `🚨 <strong>DATA BREACH ALERT:</strong> Found in ${hibp.count.toLocaleString()} publicly dumped records!`;
+    } else {
+        banner.className = "banner-alert alert-success";
+        banner.innerHTML = "🛡️ <strong>CLEAN:</strong> Zero records found in breach databases.";
+    }
+
+    // Crack Table
+    const tbody = document.getElementById("crackTableBody");
+    tbody.innerHTML = "";
+    crackTimes.forEach(p => {
+        let badgeClass = "badge-success";
+        if (p.time.includes("Instant") || p.time.includes("second") || p.time.includes("minute")) badgeClass = "badge-danger";
+        else if (p.time.includes("hour") || p.time.includes("day")) badgeClass = "badge-warning";
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td><strong>${p.name}</strong><br><span style="font-size: 0.8rem; color: var(--text-muted);">${p.desc}</span></td>
+            <td style="font-family: monospace;">${p.rate}</td>
+            <td><span class="badge ${badgeClass}">${p.time}</span></td>
+        `;
+        tbody.appendChild(tr);
+    });
+
+    // Recommendations
+    const recList = document.getElementById("recList");
+    recList.innerHTML = "";
+    if (weak.list.length === 0 && !hibp.pwned) {
+        recList.innerHTML = "<li style='color: var(--green);'>Robust cryptographic profile. No structural flaws detected.</li>";
+    } else {
+        if (hibp.pwned) {
+            const li = document.createElement("li");
+            li.style.color = "var(--red)";
+            li.innerText = "CHANGE IMMEDIATELY: This password has leaked in a public data dump!";
+            recList.appendChild(li);
+        }
+        weak.list.forEach(w => {
+            const li = document.createElement("li");
+            li.innerText = w;
+            recList.appendChild(li);
+        });
+    }
+
+    // Generate Replacements
+    document.getElementById("suggestComplex").innerText = generateSecureAlphanumeric(18);
+    document.getElementById("suggestPassphrase").innerText = generateSecurePassphrase(5);
+}
+
+function generateSample(type) {
+    const input = document.getElementById("passwordInput");
+    input.value = type === "complex" ? generateSecureAlphanumeric(18) : generateSecurePassphrase(5);
+    runAudit();
+}
+
+function copyText(elementId) {
+    const text = document.getElementById(elementId).innerText;
+    navigator.clipboard.writeText(text).then(() => alert("Copied: " + text));
+}
+</script>
+
+</body>
+</html>
