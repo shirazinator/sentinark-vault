@@ -21,11 +21,11 @@ RESET = "\033[0m"
 
 def print_banner():
     print(f"""{CYAN}{BOLD}
-   ____             __  _                  __         _   __            ____ 
+""" + r"""   ____             __  _                  __         _   __            ____ 
   / __/___ ___  __ / /_(_)__  ___ ________/ /__ _____| | / /__ ___ _____/ / /_
  _\ \/ -_) _ \/ // / __/ / _ \/ _ `/ __/ _  / _ `/ __/ |/ / _ `/ // / / _  __/
 /___/\__/_//_/\_,_/\__/_/_//_/\_,_/_/  \_,_/\_,_/_/  |___/\_,_/\_,_/_/\_,_/\__/ 
-     Zero-Knowledge Password Entropy, Breach & Hardware Crack Simulator
+     Zero-Knowledge Password Entropy, Breach & Hardware Crack Simulator""" + f"""
 {RESET}""")
 
 
